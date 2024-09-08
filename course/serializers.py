@@ -4,6 +4,12 @@ from rest_framework.fields import SerializerMethodField
 from course.models import Course, Lesson, Subscription
 
 
+class LessonSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Lesson
+        fields = '__all__'
+
+
 class CourseSerializer(serializers.ModelSerializer):
     subscription = serializers.SerializerMethodField()
 
@@ -17,24 +23,15 @@ class CourseSerializer(serializers.ModelSerializer):
 
 
 class CourseDetailSerializer(serializers.ModelSerializer):
-    count_lessons_in_course = SerializerMethodField()
+    lesson_count = serializers.SerializerMethodField()
+    lesson = LessonSerializer(source="lessons", many=True)
 
-    def get_course_lessons(self, course):
-        all_lessons = Lesson.objects.filter(course=course.id)
-        return [(lesson.title, lesson.lesson_description, lesson.link) for lesson in all_lessons]
-
-    def get_count_lessons_in_course(self, course):
-        return Course.objects.filter(lesson=course.lesson).count()
+    def get_lesson_count(self, obj):
+        return obj.lessons.all().count()
 
     class Meta:
         model = Course
-        fields = ("name", "description", "count_lessons_in_course",)
-
-
-class LessonSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Lesson
-        fields = '__all__'
+        fields = ("lesson_count", "lesson", "title", "description")
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):

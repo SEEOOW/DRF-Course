@@ -7,7 +7,6 @@ from rest_framework.generics import CreateAPIView, RetrieveAPIView, UpdateAPIVie
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.urls import reverse_lazy, reverse
 from django.views.generic import CreateView, UpdateView
-import secrets
 from users.forms import UserRegisterForm, UserProfileForm, UserLoginForm, UserRecoveryForm
 from users.models import User, Payments
 import random
