@@ -24,7 +24,7 @@ class Lesson(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE, verbose_name='Course title')
     description = models.TextField(verbose_name='Course description')
     preview = models.ImageField(upload_to='media/', verbose_name='Course image', **NULLABLE)
-    link = models.TextField(verbose_name='Lesson link', **NULLABLE)
+    link = models.URLField(verbose_name='Lesson link', **NULLABLE)
 
     def __str__(self):
         return f'{self.course} {self.description}'

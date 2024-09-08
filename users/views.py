@@ -1,16 +1,10 @@
 from django.contrib.auth.views import LoginView, PasswordResetView
-from django.core.mail import send_mail
-from django.http import HttpResponseRedirect
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
 from rest_framework.filters import OrderingFilter
 from rest_framework.generics import CreateAPIView, RetrieveAPIView, UpdateAPIView, ListAPIView, DestroyAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
-
-from config.settings import EMAIL_HOST_USER
-# Create your views here.
-from django.contrib.auth.forms import UserCreationForm
 from django.urls import reverse_lazy, reverse
 from django.views.generic import CreateView, UpdateView
 import secrets
@@ -32,22 +26,6 @@ class RegisterView(CreateView):
     form_class = UserRegisterForm
     template_name = 'users/register.html'
     success_url = reverse_lazy('users:login')
-
-    def form_valid(self, form):
-        user = form.save()
-        user.is_active = False
-        token = secrets.token_hex(16)
-        user.token = token
-        user.save()
-        host = self.request.get_host()
-        url = f'http://{host}/users/email_confirm/{token}/'
-        send_mail(
-            subject='Email confirmation',
-            message=f'Hello! Click on the link to confirm your email: {url}',
-            from_email=EMAIL_HOST_USER,
-            recipient_list=[user.email]
-        )
-        return super().form_valid(form)
 
 
 def email_verification(request, token):
@@ -76,23 +54,6 @@ class UserLoginView(LoginView):
 class UserPasswordResetView(PasswordResetView):
     form_class = UserRecoveryForm
     template_name = 'users/recovery_form.html'
-
-    def form_valid(self, form):
-        user_email = self.request.POST.get('email')
-        user = get_object_or_404(User, email=user_email)
-        new_password = generate_random_password()
-        user.set_password(new_password)
-        user.save()
-        send_mail(
-            subject="Восстановление пароля",
-            message=f"Здравствуйте! Ваш пароль для доступа на наш сайт изменен:\n"
-                    f"Данные для входа:\n"
-                    f"Email: {user_email}\n"
-                    f"Пароль: {new_password}",
-            from_email=EMAIL_HOST_USER,
-            recipient_list=[user.email]
-        )
-        return redirect('users:login')
 
 
 class PaymentsViewSet(viewsets.ModelViewSet):
