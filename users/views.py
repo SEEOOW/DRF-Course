@@ -46,7 +46,6 @@ class ProfileView(UpdateView):
 class UserLoginView(LoginView):
     model = User
     form_class = UserLoginForm
-    # redirect_authenticated_user = True
     success_url = reverse_lazy('catalog:home')
 
 
@@ -58,6 +57,7 @@ class UserPasswordResetView(PasswordResetView):
 class PaymentsViewSet(viewsets.ModelViewSet):
     serializer_class = PaymentsSerializer
     queryset = Payments.objects.all()
+    permission_classes = (IsAuthenticated,)
 
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_fields = ('paid_lesson', 'paid_course', 'pay_transfer',)
