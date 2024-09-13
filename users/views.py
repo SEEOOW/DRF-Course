@@ -1,7 +1,7 @@
 from django.contrib.auth.views import LoginView, PasswordResetView
 from django.shortcuts import get_object_or_404, redirect
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets
+from rest_framework import viewsets, generics
 from rest_framework.filters import OrderingFilter
 from rest_framework.generics import CreateAPIView, RetrieveAPIView, UpdateAPIView, ListAPIView, DestroyAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -13,6 +13,7 @@ import random
 import string
 
 from users.serializers import UserSerializer, PaymentsSerializer
+from users.services import create_stripe_product, create_stripe_price, create_stripe_session
 
 
 def generate_random_password(length=8):
@@ -62,6 +63,29 @@ class PaymentsViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_fields = ('paid_lesson', 'paid_course', 'pay_transfer',)
     ordering_fields = ['pay_date',]
+
+
+class PaymentListAPIView(generics.ListAPIView):
+    serializer_class = PaymentsSerializer
+    queryset = Payments.objects.all()
+
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filterset_fields = ('paid_lesson', 'paid_course', 'pay_method')
+    ordering_fields = ('-date_payment',)
+
+
+class PaymentCreateAPIView(generics.CreateAPIView):
+    serializer_class = PaymentsSerializer
+    queryset = Payments.objects.all()
+
+    def perform_create(self, serializer):
+        payment = serializer.save(user=self.request.user)
+        product_id = create_stripe_product(payment)
+        price_id = create_stripe_price(product_id, payment)
+        session_id, session_url = create_stripe_session(price_id)
+        payment.session_id = session_id
+        payment.link = session_url
+        payment.save()
 
 
 class UserViewSet(viewsets.ModelViewSet):
