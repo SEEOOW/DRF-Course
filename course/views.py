@@ -4,7 +4,7 @@ from rest_framework.generics import CreateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-
+from course.tasks import sending_update_course
 from course.models import Course, Lesson, Subscription
 from course.paginators import CustomPagination
 from course.permissions import Staff, Owner
@@ -30,6 +30,11 @@ class CourseViewSet(ModelViewSet):
         elif self.action == "destroy":
             self.permission_classes = (IsAuthenticated, ~Staff | Owner,)
         return [permission() for permission in self.permission_classes]
+
+    def perform_update(self, serializer):
+        course = serializer.save()
+        sending_update_course.delay(course)
+        course.save()
 
 
 class LessonCreateAPIView(generics.CreateAPIView):
